@@ -16,13 +16,13 @@ func NewRoleRepository(db *sql.DB) *RoleRepository {
 
 func (r *RoleRepository) Create(role *Role) error {
 	return r.DB.QueryRow(
-		"INSERT INTO roles(name) VALUES($1) RETURNING role_id",
+		"INSERT INTO roles(name) VALUES($1) RETURNING role_uuid",
 		role.Name,
-	).Scan(&role.RoleID)
+	).Scan(&role.RoleUuid)
 }
 
 func (r *RoleRepository) FindAll() ([]Role, error) {
-	rows, err := r.DB.Query("SELECT role_id, name FROM roles")
+	rows, err := r.DB.Query("SELECT role_uuid, name FROM roles")
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (r *RoleRepository) FindAll() ([]Role, error) {
 
 	for rows.Next() {
 		var role Role
-		rows.Scan(&role.RoleID, &role.Name)
+		rows.Scan(&role.RoleUuid, &role.Name)
 		roles = append(roles, role)
 	}
 
@@ -40,7 +40,7 @@ func (r *RoleRepository) FindAll() ([]Role, error) {
 }
 
 func (r *RoleRepository) Delete(id int) error {
-	res, err := r.DB.Exec("DELETE FROM roles WHERE role_id=$1", id)
+	res, err := r.DB.Exec("DELETE FROM roles WHERE id=$1", id)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (r *RoleRepository) FindByName(name string) (*Role, error) {
 	var role Role
 
 	err := r.DB.QueryRow(
-		"SELECT role_id, name FROM roles WHERE name=$1",
+		"SELECT id, name FROM roles WHERE name=$1",
 		name,
 	).Scan(&role.RoleID, &role.Name)
 

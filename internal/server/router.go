@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"go-api/internal/middleware"
+	"go-api/internal/modules/account"
 	"go-api/internal/modules/room"
 )
 
@@ -23,6 +24,7 @@ func New(db *sql.DB) *fiber.App {
 	})
 
 	room.RegisterRoutes(v1, db)
+	account.RegisterRoutes(v1, db)
 
 	return app
 }

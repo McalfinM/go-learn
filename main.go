@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -24,6 +25,7 @@ func main() {
 
 	// init app
 	app := server.New(db)
+	app.Use(logger.New())
 
 	// run server di goroutine
 	go func() {

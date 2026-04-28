@@ -14,9 +14,7 @@ func AuthMiddleware() fiber.Handler {
 		auth := c.Get("Authorization")
 
 		if auth == "" {
-			return c.Status(401).JSON(fiber.Map{
-				"error": "Unauthorized",
-			})
+			return fiber.NewError(401, "Unauthorized")
 		}
 
 		tokenString := strings.Replace(auth, "Bearer ", "", 1)
@@ -26,10 +24,13 @@ func AuthMiddleware() fiber.Handler {
 		})
 
 		if err != nil || !token.Valid {
-			return c.Status(401).JSON(fiber.Map{
-				"error": "Invalid token",
-			})
+			return fiber.NewError(401, "Invalid token")
 		}
+
+		claims := token.Claims.(jwt.MapClaims)
+
+		c.Locals("user_uuid", claims["user_uuid"])
+		c.Locals("role_id", claims["role_id"])
 
 		return c.Next()
 	}
@@ -54,11 +55,11 @@ func RequireRole(roles ...string) fiber.Handler {
 		}
 
 		claims := token.Claims.(jwt.MapClaims)
-		userRole := claims["role"].(string)
+		userRole := claims["role_name"].(string)
 
 		for _, r := range roles {
 			if r == userRole {
-				c.Locals("user", claims)
+				c.Locals("user_uuid", claims)
 				return c.Next()
 			}
 		}
