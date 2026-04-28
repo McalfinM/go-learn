@@ -33,6 +33,22 @@ func (s *Service) UpdateRoom(room *Room) error {
 	return s.Repo.Update(room)
 }
 
-func (s *Service) GetRoom() ([]Room, error) {
-	return s.Repo.FindAll()
+func (s *Service) GetRooms(filters map[string]interface{}) ([]Room, error) {
+	return s.Repo.FindAll(filters)
+}
+
+func (s *Service) DeleteRoom(id string) error {
+	if id == "" {
+		return utils.NewApiError(400, "room_id is required")
+	}
+
+	return s.Repo.Delete(id)
+}
+
+func (s *Service) GetRoomById(id string) (*Room, error) {
+	if id == "" {
+		return nil, utils.NewApiError(400, "room_id is required")
+	}
+
+	return s.Repo.FindByID(id)
 }

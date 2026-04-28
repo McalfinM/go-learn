@@ -3,6 +3,7 @@ package room
 import (
 	"database/sql"
 	"go-api/internal/utils"
+	"strconv"
 )
 
 type Repository struct {
@@ -40,23 +41,56 @@ func (r *Repository) Create(room *Room) error {
 	).Scan(&room.RoomID, &room.CreatedAt)
 }
 
-func (r *Repository) FindAll() ([]Room, error) {
-	rows, err := r.DB.Query(`
-		SELECT 
-			room_id,
-			name,
-			location,
-			price_transit,
-			price_daily,
-			price_monthly,
-			deposit_amount,
-			is_active,
-			is_transit_available,
-			is_daily_available,
-			is_monthly_available,
-			created_at
-		FROM rooms
-	`)
+func (r *Repository) FindAll(filters map[string]interface{}) ([]Room, error) {
+	query := `
+	SELECT 
+		room_id,
+		name,
+		location,
+		price_transit,
+		price_daily,
+		price_monthly,
+		deposit_amount,
+		is_active,
+		is_transit_available,
+		is_daily_available,
+		is_monthly_available,
+		created_at
+	FROM rooms
+	WHERE 1=1
+	`
+
+	args := []interface{}{}
+	i := 1
+
+	// filter name (LIKE)
+	if v, ok := filters["name"]; ok {
+		query += " AND name ILIKE $" + strconv.Itoa(i)
+		args = append(args, "%"+v.(string)+"%")
+		i++
+	}
+
+	// filter is_active
+	if v, ok := filters["is_active"]; ok {
+		query += " AND is_active=$" + strconv.Itoa(i)
+		args = append(args, v)
+		i++
+	}
+
+	// price range
+	if v, ok := filters["price_daily_min"]; ok {
+		query += " AND price_daily >= $" + strconv.Itoa(i)
+		args = append(args, v)
+		i++
+	}
+
+	if v, ok := filters["price_daily_max"]; ok {
+		query += " AND price_daily <= $" + strconv.Itoa(i)
+		args = append(args, v)
+		i++
+	}
+
+	rows, err := r.DB.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +121,6 @@ func (r *Repository) FindAll() ([]Room, error) {
 		}
 
 		rooms = append(rooms, room)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
 	return rooms, nil
@@ -169,6 +199,19 @@ func (r *Repository) Update(room *Room) error {
 }
 
 func (r *Repository) Delete(id string) error {
-	_, err := r.DB.Exec(`DELETE FROM rooms WHERE room_id=$1`, id)
-	return err
+	result, err := r.DB.Exec(`DELETE FROM rooms WHERE room_id=$1`, id)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return utils.NewApiError(404, "room not found")
+	}
+
+	return nil
 }

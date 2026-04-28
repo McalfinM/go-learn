@@ -3,8 +3,7 @@ package room
 import (
 	"go-api/internal/utils"
 
-	"github.com/gin-gonic/gin"
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 )
 
 type Handler struct {
@@ -23,7 +22,9 @@ func (h *Handler) CreateRoom(c *fiber.Ctx) error {
 	}
 
 	if err := h.Service.CreateRoom(&room); err != nil {
-		return utils.Error(c, err)
+		if err != nil {
+			return err
+		}
 	}
 
 	return utils.JSON(c, 201, room)
@@ -40,28 +41,46 @@ func (h *Handler) GetRooms(c *fiber.Ctx) error {
 
 	rooms, err := h.Service.GetRooms(filters)
 	if err != nil {
-		return utils.Error(c, err)
+		if err != nil {
+			return err
+		}
 	}
 
 	return utils.JSON(c, 200, rooms)
 }
 
-func (h *Handler) UpdateRoom(c *gin.Context) {
-	id := c.Param("id")
+func (h *Handler) UpdateRoom(c *fiber.Ctx) error {
+	id := c.Params("id")
 
 	var room Room
 
-	if err := c.ShouldBindJSON(&room); err != nil {
-		utils.Error(c, utils.NewApiError(400, err.Error()))
-		return
+	if err := c.BodyParser(&room); err != nil {
+		if err != nil {
+			return err
+		}
 	}
 
 	room.RoomID = id
 
 	if err := h.Service.UpdateRoom(&room); err != nil {
-		utils.Error(c, err)
-		return
+		if err != nil {
+			return err
+		}
 	}
 
-	utils.JSON(c, 200, room)
+	return utils.JSON(c, 200, room)
+}
+
+func (h *Handler) DeleteRoom(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	if err := h.Service.DeleteRoom(id); err != nil {
+		if err != nil {
+			return err
+		}
+	}
+
+	return utils.JSON(c, 200, fiber.Map{
+		"message": "deleted",
+	})
 }

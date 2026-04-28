@@ -18,10 +18,11 @@ func RegisterRoutes(r fiber.Router, db *sql.DB) {
 	// public
 	rooms.Get("/", handler.GetRooms)
 
-	// protected
-	rooms.Use(middleware.AuthMiddleware())
+	// admin only
+	rooms.Post("/", middleware.RequireRole("admin"), handler.CreateRoom)
+	rooms.Put("/:id", middleware.RequireRole("admin"), handler.UpdateRoom)
+	rooms.Delete("/:id", middleware.RequireRole("admin"), handler.DeleteRoom)
 
-	rooms.Post("/", handler.CreateRoom)
-	rooms.Put("/:id", handler.UpdateRoom)
-	rooms.Delete("/:id", handler.DeleteRoom)
+	// customer + admin
+	// rooms.Get("/:id", middleware.RequireRole("admin", "customer"), handler.ge)
 }

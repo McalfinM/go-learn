@@ -3,7 +3,7 @@ package middleware
 import (
 	"strings"
 
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -32,5 +32,37 @@ func AuthMiddleware() fiber.Handler {
 		}
 
 		return c.Next()
+	}
+}
+
+func RequireRole(roles ...string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		auth := c.Get("Authorization")
+
+		if auth == "" {
+			return fiber.NewError(401, "Unauthorized")
+		}
+
+		tokenString := strings.Replace(auth, "Bearer ", "", 1)
+
+		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+			return JWT_SECRET, nil
+		})
+
+		if err != nil || !token.Valid {
+			return fiber.NewError(401, "Invalid token")
+		}
+
+		claims := token.Claims.(jwt.MapClaims)
+		userRole := claims["role"].(string)
+
+		for _, r := range roles {
+			if r == userRole {
+				c.Locals("user", claims)
+				return c.Next()
+			}
+		}
+
+		return fiber.NewError(403, "Forbidden")
 	}
 }

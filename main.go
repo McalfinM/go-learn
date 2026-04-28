@@ -5,7 +5,6 @@ import (
 	"go-api/internal/config"
 	"go-api/internal/server"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,27 +14,27 @@ import (
 )
 
 func main() {
-	// build app (tidak async)
-
-	err := godotenv.Load()
-	if err != nil {
+	// load env
+	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
 	}
 
+	// init db
 	db := config.InitDB()
-	app := server.New(db)
 
-	app.Listen(":3001")
+	// init app
+	app := server.New(db)
 
 	// run server di goroutine
 	go func() {
-		log.Println("Server running on 0.0.0.0:3001")
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen error: %s\n", err)
+		if err := app.Listen(":3001"); err != nil {
+			log.Println("Server stopped:", err)
 		}
 	}()
 
-	// graceful shutdown (mirip terminate di TS kamu)
+	log.Println("Server running on :3001")
+
+	// graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -46,8 +45,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
+	if err := app.ShutdownWithContext(ctx); err != nil {
+		log.Println("Server forced shutdown:", err)
+	}
+
+	// close DB (PENTING)
+	if err := db.Close(); err != nil {
+		log.Println("Error closing DB:", err)
 	}
 
 	log.Println("Server exiting")
