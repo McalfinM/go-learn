@@ -44,3 +44,27 @@ func (r *UserRepository) FindByEmail(email string) (*User, error) {
 
 	return &user, nil
 }
+
+func (r *UserRepository) FindByUuid(user_uuid string) (*User, error) {
+	var user User
+
+	err := r.DB.QueryRow(`
+		SELECT u.id, u.user_uuid, u.email, u.role_id, r.name as role_name
+		FROM users u
+		JOIN roles r ON r.id = u.role_id
+		WHERE u.user_uuid = $1
+	`, user_uuid).Scan(
+		&user.ID,
+		&user.UserUUID,
+		&user.Email,
+		&user.Password,
+		&user.RoleID,
+		&user.RoleName,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

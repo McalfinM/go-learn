@@ -91,6 +91,8 @@ CREATE TABLE public.bookings (
 	status varchar(20) NULL DEFAULT 'pending'::character varying,
 	created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
 	id bigserial NOT NULL,
+	guest_name text NOT NULL,
+	guest_ktp text NOT NULL,
 	CONSTRAINT bookings_pkey PRIMARY KEY (booking_id),
 	CONSTRAINT bookings_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.rooms(room_id)
 );
@@ -212,4 +214,27 @@ CREATE TABLE public.access_tokens (
 	CONSTRAINT access_tokens_pkey PRIMARY KEY (token_id),
 	CONSTRAINT access_tokens_token_key UNIQUE (token),
 	CONSTRAINT access_tokens_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(booking_id) ON DELETE CASCADE
+);
+
+
+-- public.profiles definition
+
+-- Drop table
+
+-- DROP TABLE public.profiles;
+
+CREATE TABLE public.profiles (
+	id bigserial NOT NULL,
+	profile_uuid uuid NOT NULL DEFAULT gen_random_uuid(),
+	user_id int8 NULL,
+	full_name text NULL,
+	ktp_number text NULL,
+	phone text NULL,
+	address text NULL,
+	date_of_birth date NULL,
+	created_at timestamp NULL DEFAULT now(),
+	updated_at timestamp NULL DEFAULT now(),
+	CONSTRAINT profiles_pkey PRIMARY KEY (id),
+	CONSTRAINT profiles_user_id_key UNIQUE (user_id),
+	CONSTRAINT profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
 );
