@@ -8,8 +8,9 @@ type Booking struct {
 	ID          int64  `json:"-"`
 	BookingUUID string `json:"booking_uuid"`
 
-	UserID int64  `json:"-"`
-	RoomID string `json:"-"`
+	UserID   int64  `json:"-"`
+	RoomUuid string `json:"-"`
+	RoomID   int64  `json:"-"`
 
 	BookingType string `json:"booking_type"`
 
@@ -33,6 +34,7 @@ type BookingAccess struct {
 
 	BookingID int64
 	RoomID    int64
+	RoomUuid  string
 
 	QRCode string
 

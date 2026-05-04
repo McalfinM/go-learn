@@ -33,4 +33,6 @@ type Profile struct {
 
 	Address     string     `json:"address"`
 	DateOfBirth *time.Time `json:"date_of_birth"`
+
+	KtpImageUrl string `json:"-"`
 }

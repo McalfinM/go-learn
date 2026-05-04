@@ -24,6 +24,9 @@ func RegisterRoutes(r fiber.Router, db *sql.DB) {
 	auth.Post("/register", userHandler.Register)
 	auth.Post("/login", userHandler.Login)
 
+	profile := r.Group("/profile")
+	profile.Post("/update-image", middleware.RequireRole("guest"), userHandler.UploadKTP)
+
 	repo := NewRoleRepository(db)
 	service := NewRoleService(repo)
 	handler := NewRoleHandler(service)

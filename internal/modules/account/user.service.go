@@ -2,6 +2,8 @@ package account
 
 import (
 	"go-api/internal/utils"
+	"go-api/internal/utils/storage"
+	"mime/multipart"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -11,7 +13,8 @@ import (
 var JWT_SECRET = []byte("your_secret")
 
 type UserService struct {
-	UserRepo *UserRepository
+	UserRepo    *UserRepository
+	ProfileRepo *ProfileRepository
 }
 
 func NewUserService(r *UserRepository) *UserService {
@@ -60,4 +63,34 @@ func (s *UserService) Login(email, password string) (string, error) {
 	}
 
 	return signed, nil
+}
+
+func (s *UserService) FindByUuid(userUUID string) (*User, error) {
+	user, err := s.UserRepo.FindByUuid(userUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *UserService) UploadKTP(userUUID string, file *multipart.FileHeader) (string, error) {
+	user, err := s.UserRepo.FindByUuid(userUUID)
+	if err != nil {
+		return "", err
+	}
+
+	// upload ke storage (cloudinary)
+	upload := storage.GetStorage()
+	url, err := upload.Upload(file, "ktp")
+	if err != nil {
+		return "", err
+	}
+
+	// 🔥 simpan ke DB
+	if err := s.ProfileRepo.UpsertKTPImage(user.UserUUID, url); err != nil {
+		return "", err
+	}
+
+	return url, nil
 }

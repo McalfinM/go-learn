@@ -54,3 +54,21 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 		"token": token,
 	})
 }
+
+func (h *UserHandler) UploadKTP(c *fiber.Ctx) error {
+	file, err := c.FormFile("ktp")
+	if err != nil {
+		return fiber.NewError(400, "file required")
+	}
+
+	userUUID := c.Locals("user_uuid").(string)
+
+	url, err := h.UserService.UploadKTP(userUUID, file)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{
+		"url": url,
+	})
+}

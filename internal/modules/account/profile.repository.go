@@ -36,3 +36,15 @@ func (r *ProfileRepository) FindByUserID(userID int64) (*Profile, error) {
 
 	return &p, nil
 }
+
+func (r *ProfileRepository) UpsertKTPImage(userID string, url string) error {
+	_, err := r.DB.Exec(`
+		INSERT INTO profiles (user_id, ktp_image_url)
+		VALUES ($1, $2)
+		ON CONFLICT (user_id)
+		DO UPDATE SET ktp_image_url = EXCLUDED.ktp_image_url,
+		              updated_at = NOW()
+	`, userID, url)
+
+	return err
+}
